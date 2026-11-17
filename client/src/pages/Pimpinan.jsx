@@ -3,10 +3,10 @@ import { api } from '../api.js'
 import { useAuth } from '../auth.jsx'
 
 const warnaStatus = {
-  Aman: 'text-aman', Normal: 'text-aman', Warning: 'text-warn', Critical: 'text-telkom',
+  Aman: 'text-[#10B981]', Normal: 'text-[#10B981]', Warning: 'text-[#F59E0B]', Critical: 'text-[#ED1C24]',
 }
 const warnaTiket = {
-  Pending: 'bg-slate-600', 'In Progress': 'bg-warn text-slate-900', Selesai: 'bg-aman text-slate-900',
+  Pending: 'bg-slate-600', 'In Progress': 'bg-[#F59E0B] text-slate-900', Selesai: 'bg-[#10B981] text-slate-900',
 }
 
 export default function Pimpinan() {
@@ -64,12 +64,12 @@ export default function Pimpinan() {
     }
   }
 
-  const input = 'w-full rounded-lg bg-slate-700 px-3 py-2 outline-none focus:ring-2 focus:ring-telkom'
+  const input = 'w-full rounded-lg bg-slate-700 px-3 py-2 outline-none focus:ring-2 focus:ring-[#ED1C24]'
 
   return (
     <div className="mx-auto max-w-3xl p-4 space-y-4">
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-telkom">OPTIGUARD · Pimpinan</h1>
+        <h1 className="text-xl font-bold text-[#ED1C24]">OPTIGUARD · Pimpinan</h1>
         <div className="flex items-center gap-3 text-sm">
           <span className="text-slate-400">{user.nama}</span>
           <button onClick={logout} className="rounded-lg bg-slate-700 px-3 py-1">Keluar</button>
@@ -100,10 +100,10 @@ export default function Pimpinan() {
         <input type="date" className={input} value={form.tanggal_tugas}
           onChange={(e) => setForm({ ...form, tanggal_tugas: e.target.value })} />
         <button disabled={loading}
-          className="w-full rounded-lg bg-telkom py-2 font-semibold disabled:opacity-60">
+          className="w-full rounded-lg bg-[#ED1C24] py-2 font-semibold disabled:opacity-60">
           {loading ? 'Memproses...' : 'Buat Tugas & Broadcast Telegram'}
         </button>
-        {msg && <p className={`text-sm ${msg.ok ? 'text-aman' : 'text-red-400'}`}>{msg.teks}</p>}
+        {msg && <p className={`text-sm ${msg.ok ? 'text-[#10B981]' : 'text-red-400'}`}>{msg.teks}</p>}
       </form>
 
       <section className="rounded-xl bg-slate-800 p-4 space-y-2">

@@ -8,7 +8,9 @@ import auditRoutes from './routes/audit.js';
 import dashboardRoutes from './routes/dashboard.js';
 
 const app = express();
-app.use(cors());
+const allowed = (process.env.FRONTEND_URL || '').split(',').filter(Boolean)
+app.use(cors({ origin: [...allowed, 'http://localhost:5173', 'http://localhost:4173'] }))
+
 app.use(express.json());
 
 app.get('/health', async (_req, res) => {

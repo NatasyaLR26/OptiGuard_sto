@@ -27,22 +27,22 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <form onSubmit={submit} className="w-full max-w-sm bg-slate-800 rounded-2xl p-6 space-y-4">
-        <h1 className="text-2xl font-bold text-telkom">OPTIGUARD</h1>
+        <h1 className="text-2xl font-bold text-[#ED1C24]">OPTIGUARD</h1>
         <p className="text-sm text-slate-400">Validasi Instalasi & Preventive Maintenance ODP</p>
         <input
           type="email" required placeholder="Email" value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-lg bg-slate-700 px-3 py-2 outline-none focus:ring-2 focus:ring-telkom"
+          className="w-full rounded-lg bg-slate-700 px-3 py-2 outline-none focus:ring-2 focus:ring-[#ED1C24]"
         />
         <input
           type="password" required placeholder="Password" value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg bg-slate-700 px-3 py-2 outline-none focus:ring-2 focus:ring-telkom"
+          className="w-full rounded-lg bg-slate-700 px-3 py-2 outline-none focus:ring-2 focus:ring-[#ED1C24]"
         />
         {err && <p className="text-sm text-red-400">{err}</p>}
         <button
           disabled={loading}
-          className="w-full rounded-lg bg-telkom py-2 font-semibold disabled:opacity-60"
+          className="w-full rounded-lg bg-[#ED1C24] py-2 font-semibold disabled:opacity-60"
         >
           {loading ? 'Masuk...' : 'Masuk'}
         </button>
