@@ -8,9 +8,9 @@ import auditRoutes from './routes/audit.js';
 import dashboardRoutes from './routes/dashboard.js';
 
 const app = express();
-const allowed = (process.env.FRONTEND_URL || '').split(',').filter(Boolean)
-app.use(cors({ origin: [...allowed, 'http://localhost:5173', 'http://localhost:4173'] }))
 
+const allowed = (process.env.FRONTEND_URL || '').split(',').filter(Boolean);
+app.use(cors({ origin: [...allowed, 'http://localhost:5173', 'http://localhost:4173'] }));
 app.use(express.json());
 
 app.get('/health', async (_req, res) => {
@@ -22,17 +22,12 @@ app.get('/health', async (_req, res) => {
 });
 
 app.use('/auth', authRoutes);
-
-app.listen(process.env.PORT, (err) => {
-  if (err) {
-    console.error('Gagal start:', err.message);
-    process.exit(1);
-  }
-  console.log('API jalan di :' + process.env.PORT);
-});
-
 app.use('/tiket', tiketRoutes);
-
 app.use('/audit', auditRoutes);
-
 app.use('/dashboard', dashboardRoutes);
+
+if (!process.env.VERCEL) {
+  app.listen(process.env.PORT, () => console.log('API jalan di :' + process.env.PORT));
+}
+
+export default app;
