@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import Login from './pages/Login.jsx'
+import Pimpinan from './pages/Pimpinan.jsx'
 
 function Guard({ role, children }) {
   const { user } = useAuth()
@@ -31,7 +32,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/pimpinan" element={<Guard role="pimpinan"><Sementara judul="Dashboard Pimpinan" /></Guard>} />
+      <Route path="/pimpinan" element={<Guard role="pimpinan"><Pimpinan /></Guard>} />
       <Route path="/teknisi" element={<Guard role="teknisi"><Sementara judul="Tugas Teknisi" /></Guard>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
