@@ -15,7 +15,7 @@ router.get('/', authRequired, roleOnly('pimpinan'), async (_req, res) => {
 router.get('/odp', authRequired, roleOnly('pimpinan'), async (_req, res) => {
   const { data: odp, error } = await supabase
     .from('odp')
-    .select('id, kode_odp, alamat, area, kapasitas_port, port_terpakai, status, status_fisik')
+    .select('id, kode_odp, alamat, area, kapasitas_port, port_terpakai, status, status_fisik, diblokir, alasan_blokir')
     .order('id');
   if (error) return res.status(500).json({ error: error.message });
 
@@ -28,6 +28,23 @@ router.get('/odp', authRequired, roleOnly('pimpinan'), async (_req, res) => {
   (audit || []).forEach((a) => { if (!terakhir.has(a.odp_id)) terakhir.set(a.odp_id, a); });
 
   res.json(odp.map((o) => ({ ...o, audit_terakhir: terakhir.get(o.id) || null })));
+});
+
+router.post('/odp/:id/blokir', authRequired, roleOnly('pimpinan'), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'id tidak valid' });
+  const alasan = String(req.body?.alasan || '').trim().slice(0, 200) || 'Port penuh/rusak sesuai eviden lapangan';
+  const { error } = await supabase.rpc('blokir_odp', { p_id: id, p_alasan: alasan });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+router.post('/odp/:id/buka-blokir', authRequired, roleOnly('pimpinan'), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'id tidak valid' });
+  const { error } = await supabase.rpc('buka_blokir_odp', { p_id: id });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 export default router;
