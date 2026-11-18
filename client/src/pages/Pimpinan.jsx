@@ -15,16 +15,17 @@ export default function Pimpinan() {
   const [areas, setAreas] = useState([])
   const [teknisi, setTeknisi] = useState([])
   const [tiket, setTiket] = useState([])
+  const [odpList, setOdpList] = useState([])
   const [form, setForm] = useState({ area_klaster: '', teknisi_id: '', tanggal_tugas: '' })
   const [msg, setMsg] = useState(null)
   const [loading, setLoading] = useState(false)
   const [detail, setDetail] = useState(null)
 
   const muat = useCallback(async () => {
-    const [r, a, t, tk] = await Promise.all([
-      api('/dashboard'), api('/tiket/area'), api('/tiket/teknisi'), api('/tiket'),
+    const [r, a, t, tk, od] = await Promise.all([
+      api('/dashboard'), api('/tiket/area'), api('/tiket/teknisi'), api('/tiket'), api('/dashboard/odp'),
     ])
-    setRekap(r); setAreas(a); setTeknisi(t); setTiket(tk)
+    setRekap(r); setAreas(a); setTeknisi(t); setTiket(tk); setOdpList(od)
   }, [])
 
   useEffect(() => {
@@ -59,6 +60,31 @@ export default function Pimpinan() {
   async function buka(id) {
     try {
       setDetail(await api(`/tiket/${id}/odp`))
+    } catch (err) {
+      setMsg({ ok: false, teks: err.message })
+    }
+  }
+
+  async function blokir(o) {
+    const alasan = window.prompt(`Blokir ${o.kode_odp}? Isi alasan (misal: port penuh sesuai foto eviden):`)
+    if (alasan === null) return
+    try {
+      await api(`/dashboard/odp/${o.id}/blokir`, { method: 'POST', body: { alasan } })
+      setMsg({ ok: true, teks: `${o.kode_odp} diblokir. Status di WebGIS menjadi Penuh.` })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      await muat()
+    } catch (err) {
+      setMsg({ ok: false, teks: err.message })
+    }
+  }
+
+  async function bukaBlokir(o) {
+    if (!window.confirm(`Buka blokir ${o.kode_odp}?`)) return
+    try {
+      await api(`/dashboard/odp/${o.id}/buka-blokir`, { method: 'POST' })
+      setMsg({ ok: true, teks: `Blokir ${o.kode_odp} dibuka.` })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      await muat()
     } catch (err) {
       setMsg({ ok: false, teks: err.message })
     }
@@ -122,6 +148,52 @@ export default function Pimpinan() {
               {t.status_tiket}
             </span>
           </button>
+        ))}
+      </section>
+
+      <section className="rounded-xl bg-slate-800 p-4 space-y-2">
+        <h2 className="font-semibold text-slate-300">Pemantauan ODP</h2>
+        {odpList.map((o) => (
+          <div key={o.id} className="rounded-lg bg-slate-700 p-3 text-sm space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">{o.kode_odp}</span>
+              <span className={`font-semibold ${warnaStatus[o.status_fisik]}`}>{o.status_fisik}</span>
+            </div>
+            <div className="text-xs text-slate-400">{o.alamat}</div>
+            <div className="text-xs text-slate-300">
+              Area: {o.area || '-'} · Port terpakai: {o.port_terpakai ?? 0}/{o.kapasitas_port}
+            </div>
+            {o.audit_terakhir ? (
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <div className="space-y-0.5">
+                  <div>
+                    Audit terakhir: {new Date(o.audit_terakhir.waktu_audit).toLocaleDateString('id-ID')} ·{' '}
+                    <b className={warnaStatus[o.audit_terakhir.status_akhir]}>{o.audit_terakhir.status_akhir}</b>
+                  </div>
+                  <div className="text-slate-400">
+                    Tiang {o.audit_terakhir.kondisi_tiang} · Boks {o.audit_terakhir.kondisi_boks} · Kabel{' '}
+                    {o.audit_terakhir.kondisi_kabel} · Port {o.audit_terakhir.kondisi_port}
+                  </div>
+                </div>
+                {o.audit_terakhir.foto_bukti && (
+                  <a href={o.audit_terakhir.foto_bukti} target="_blank" rel="noreferrer">
+                    <img src={o.audit_terakhir.foto_bukti} alt="Eviden" className="h-14 w-14 rounded object-cover" />
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400">Belum pernah diaudit</div>
+            )}
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="text-slate-300">Status WebGIS: <b>{o.status}</b></span>
+              {o.diblokir ? (
+                <button onClick={() => bukaBlokir(o)} className="rounded-lg bg-slate-600 px-3 py-1">Buka blokir</button>
+              ) : (
+                <button onClick={() => blokir(o)} className="rounded-lg bg-[#ED1C24] px-3 py-1 font-semibold">Blokir ODP</button>
+              )}
+            </div>
+            {o.diblokir && <div className="text-xs text-[#ED1C24]">DIBLOKIR: {o.alasan_blokir}</div>}
+          </div>
         ))}
       </section>
 
