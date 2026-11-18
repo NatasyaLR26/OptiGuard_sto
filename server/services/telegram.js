@@ -1,16 +1,15 @@
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 export async function kirimTelegram(chatId, teks) {
-  if (!chatId || !process.env.TELEGRAM_BOT_TOKEN) return false;
+  const token = (process.env.TELEGRAM_BOT_TOKEN || '').trim().replace(/^["']|["']$/g, '');
+  if (!chatId) { console.error('Telegram dilewati: chat id kosong'); return false; }
+  if (!token) { console.error('Telegram dilewati: TELEGRAM_BOT_TOKEN kosong'); return false; }
   try {
-    const r = await fetch(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: teks, parse_mode: 'HTML' }),
-      }
-    );
+    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: teks, parse_mode: 'HTML' }),
+    });
     const j = await r.json();
     if (!j.ok) console.error('Telegram gagal:', j.description);
     return !!j.ok;
