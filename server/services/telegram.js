@@ -11,7 +11,10 @@ export async function kirimTelegram(chatId, teks) {
       body: JSON.stringify({ chat_id: chatId, text: teks, parse_mode: 'HTML' }),
     });
     const j = await r.json();
-    if (!j.ok) console.error('Telegram gagal:', j.description);
+    if (!j.ok) {
+      console.error('Telegram gagal:', j.description,
+        '| panjang token:', token.length, '| id bot:', token.split(':')[0]);
+    }
     return !!j.ok;
   } catch (e) {
     console.error('Telegram error:', e.message);
