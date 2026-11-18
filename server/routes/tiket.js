@@ -3,7 +3,6 @@ import { supabase } from '../services/supabase.js';
 import { authRequired, roleOnly } from '../middleware/auth.js';
 import { kirimTelegram, pesanTiketBaru } from '../services/telegram.js';
 
-
 const router = Router();
 
 // Daftar area untuk dropdown
@@ -92,6 +91,29 @@ router.get('/:id/odp', authRequired, async (req, res) => {
   const byOdp = new Map((audit || []).map((a) => [a.odp_id, a]));
 
   res.json({ tiket, odp: odp.map((o) => ({ ...o, audit: byOdp.get(o.id) || null })) });
+});
+
+// Teknisi mulai mengerjakan tiket (Pending -> In Progress)
+router.post('/:id/mulai', authRequired, roleOnly('teknisi'), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'id tidak valid' });
+
+  const { data: tiket } = await supabase
+    .from('tiket_patroli').select('*').eq('id', id).maybeSingle();
+  if (!tiket || tiket.teknisi_id !== req.user.id)
+    return res.status(403).json({ error: 'Tiket tidak ditemukan atau bukan milik kamu' });
+  if (tiket.status_tiket !== 'Pending')
+    return res.status(409).json({ error: `Tiket sudah berstatus ${tiket.status_tiket}` });
+
+  const { data, error } = await supabase
+    .from('tiket_patroli')
+    .update({ status_tiket: 'In Progress' })
+    .eq('id', id)
+    .eq('status_tiket', 'Pending')
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ tiket: data });
 });
 
 export default router;

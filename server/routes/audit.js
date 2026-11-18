@@ -34,7 +34,9 @@ router.post('/', authRequired, roleOnly('teknisi'), upload.single('foto'), async
     return res.status(403).json({ error: 'Tiket tidak ditemukan atau bukan milik kamu' });
   if (tiket.status_tiket === 'Selesai')
     return res.status(409).json({ error: 'Tiket sudah selesai' });
-
+    if (tiket.status_tiket === 'Pending')
+    return res.status(409).json({ error: 'Mulai tiket dulu sebelum mengaudit' });
+  
   const { data: odp } = await supabase.from('odp').select('id, area').eq('id', odp_id).maybeSingle();
   if (!odp || odp.area !== tiket.area_klaster)
     return res.status(400).json({ error: 'ODP bukan bagian dari area tiket ini' });

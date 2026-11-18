@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
 import { useAuth } from '../auth.jsx'
+import Statistik from './Statistik.jsx'
 
 const warnaStatus = {
   Aman: 'text-[#10B981]', Normal: 'text-[#10B981]', Warning: 'text-[#F59E0B]', Critical: 'text-[#ED1C24]',
@@ -20,6 +21,8 @@ export default function Pimpinan() {
   const [msg, setMsg] = useState(null)
   const [loading, setLoading] = useState(false)
   const [detail, setDetail] = useState(null)
+  const [dialog, setDialog] = useState(null)
+  const [dialogErr, setDialogErr] = useState('')
 
   const muat = useCallback(async () => {
     const [r, a, t, tk, od] = await Promise.all([
@@ -65,28 +68,26 @@ export default function Pimpinan() {
     }
   }
 
-  async function blokir(o) {
-    const alasan = window.prompt(`Blokir ${o.kode_odp}? Isi alasan (misal: port penuh sesuai foto eviden):`)
-    if (alasan === null) return
-    try {
-      await api(`/dashboard/odp/${o.id}/blokir`, { method: 'POST', body: { alasan } })
-      setMsg({ ok: true, teks: `${o.kode_odp} diblokir. Status di WebGIS menjadi Penuh.` })
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      await muat()
-    } catch (err) {
-      setMsg({ ok: false, teks: err.message })
-    }
+  function bukaDialog(jenis, o) {
+    setDialog({ jenis, odp: o, alasan: '' })
+    setDialogErr('')
   }
 
-  async function bukaBlokir(o) {
-    if (!window.confirm(`Buka blokir ${o.kode_odp}?`)) return
+  async function kirimDialog() {
+    const { jenis, odp, alasan } = dialog
     try {
-      await api(`/dashboard/odp/${o.id}/buka-blokir`, { method: 'POST' })
-      setMsg({ ok: true, teks: `Blokir ${o.kode_odp} dibuka.` })
+      if (jenis === 'blokir') {
+        await api(`/dashboard/odp/${odp.id}/blokir`, { method: 'POST', body: { alasan } })
+        setMsg({ ok: true, teks: `${odp.kode_odp} diblokir. Status di WebGIS menjadi Penuh.` })
+      } else {
+        await api(`/dashboard/odp/${odp.id}/buka-blokir`, { method: 'POST' })
+        setMsg({ ok: true, teks: `Blokir ${odp.kode_odp} dibuka.` })
+      }
+      setDialog(null)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       await muat()
     } catch (err) {
-      setMsg({ ok: false, teks: err.message })
+      setDialogErr(err.message)
     }
   }
 
@@ -111,6 +112,8 @@ export default function Pimpinan() {
         ))}
       </section>
 
+            <Statistik />
+            
       <form onSubmit={buat} className="rounded-xl bg-slate-800 p-4 space-y-3">
         <h2 className="font-semibold text-slate-300">Dispatching Tiket Patroli</h2>
         <select required className={input} value={form.area_klaster}
@@ -187,15 +190,45 @@ export default function Pimpinan() {
             <div className="flex items-center justify-between gap-2 text-xs">
               <span className="text-slate-300">Status WebGIS: <b>{o.status}</b></span>
               {o.diblokir ? (
-                <button onClick={() => bukaBlokir(o)} className="rounded-lg bg-slate-600 px-3 py-1">Buka blokir</button>
+                <button onClick={() => bukaDialog('buka', o)} className="rounded-lg bg-slate-600 px-3 py-1">Buka blokir</button>
               ) : (
-                <button onClick={() => blokir(o)} className="rounded-lg bg-[#ED1C24] px-3 py-1 font-semibold">Blokir ODP</button>
+                <button onClick={() => bukaDialog('blokir', o)} className="rounded-lg bg-[#ED1C24] px-3 py-1 font-semibold">Blokir ODP</button>
               )}
             </div>
             {o.diblokir && <div className="text-xs text-[#ED1C24]">DIBLOKIR: {o.alasan_blokir}</div>}
           </div>
         ))}
       </section>
+
+      {dialog && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setDialog(null)}>
+          <div className="w-full max-w-sm space-y-3 rounded-2xl bg-slate-800 p-4"
+            onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold">
+              {dialog.jenis === 'blokir' ? 'Blokir' : 'Buka blokir'} {dialog.odp.kode_odp}
+            </h3>
+            {dialog.jenis === 'blokir' ? (
+              <>
+                <p className="text-xs text-slate-400">
+                  Status di WebGIS menjadi Penuh sampai blokir dibuka.
+                </p>
+                <textarea rows={3} className={input}
+                  placeholder="Alasan (misal: port penuh sesuai foto eviden)"
+                  value={dialog.alasan}
+                  onChange={(e) => setDialog({ ...dialog, alasan: e.target.value })} />
+              </>
+            ) : (
+              <p className="text-sm text-slate-300">Status WebGIS dikembalikan ke status sebelumnya.</p>
+            )}
+            {dialogErr && <p className="text-sm text-red-400">{dialogErr}</p>}
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setDialog(null)} className="rounded-lg bg-slate-700 py-2">Batal</button>
+              <button type="button" onClick={kirimDialog} className="rounded-lg bg-[#ED1C24] py-2 font-semibold">Ya, lanjut</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {detail && (
         <div className="fixed inset-0 z-10 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"

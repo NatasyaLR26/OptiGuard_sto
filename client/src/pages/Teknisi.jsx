@@ -2,7 +2,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
 import { useAuth } from '../auth.jsx'
 
-const warna = { Aman: 'text-[#10B981]', Normal: 'text-[#10B981]', Warning: 'text-[#F59E0B]', Critical: 'text-[#ED1C24]' }
+const warna = {
+  Aman: 'text-[#10B981]', Normal: 'text-[#10B981]', Warning: 'text-[#F59E0B]', Critical: 'text-[#ED1C24]',
+}
 const warnaTiket = {
   Pending: 'bg-slate-600', 'In Progress': 'bg-[#F59E0B] text-slate-900', Selesai: 'bg-[#10B981] text-slate-900',
 }
@@ -128,6 +130,17 @@ export default function Teknisi() {
     muatDaftar().catch((e) => setMsg({ ok: false, teks: e.message }))
   }, [muatDaftar])
 
+  async function mulai() {
+    try {
+      await api(`/tiket/${aktif.tiket.id}/mulai`, { method: 'POST' })
+      setMsg({ ok: true, teks: 'Tiket dimulai. Silakan audit tiap ODP.' })
+      await bukaTiket(aktif.tiket.id)
+      await muatDaftar()
+    } catch (e) {
+      setMsg({ ok: false, teks: e.message })
+    }
+  }
+
   async function selesaiAudit(r) {
     setMsg({ ok: true, teks: `Audit terkirim. Status ODP: ${r.status_akhir}` })
     setOdpPilih(null)
@@ -140,6 +153,8 @@ export default function Teknisi() {
     setOdpPilih(null)
     muatDaftar()
   }
+
+  const dikerjakan = aktif?.tiket.status_tiket === 'In Progress'
 
   return (
     <div className="mx-auto max-w-md p-4 space-y-4">
@@ -176,6 +191,19 @@ export default function Teknisi() {
         <section className="space-y-2">
           <button onClick={kembali} className="text-sm text-slate-400">← Kembali</button>
           <h2 className="font-semibold">Tiket #{aktif.tiket.id} · {aktif.tiket.area_klaster}</h2>
+
+          {aktif.tiket.status_tiket === 'Pending' && (
+            <div className="rounded-xl bg-slate-800 p-4 space-y-2">
+              <p className="text-sm text-slate-300">
+                Tiket ini belum dimulai. Tekan tombol di bawah saat kamu sudah di lokasi.
+              </p>
+              <button onClick={mulai}
+                className="w-full rounded-lg bg-[#ED1C24] py-2 font-semibold">
+                Mulai Kerjakan
+              </button>
+            </div>
+          )}
+
           {aktif.odp.map((o) => (
             <div key={o.id} className="rounded-xl bg-slate-800 p-3 text-sm space-y-1">
               <div className="font-medium">{o.kode_odp}</div>
@@ -193,7 +221,7 @@ export default function Teknisi() {
                   {o.audit ? (
                     <span className="rounded-lg bg-[#10B981] px-3 py-1 text-xs text-slate-900">Sudah diaudit</span>
                   ) : (
-                    aktif.tiket.status_tiket !== 'Selesai' && (
+                    dikerjakan && (
                       <button onClick={() => { setMsg(null); setOdpPilih(o) }}
                         className="rounded-lg bg-[#ED1C24] px-3 py-1 text-xs font-semibold">Audit</button>
                     )
